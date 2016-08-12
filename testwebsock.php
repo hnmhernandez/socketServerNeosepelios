@@ -9,14 +9,36 @@ class echoServer extends WebSocketServer {
     var $arrayUsers;
     protected function process ($user, $message) {
         global $arrayUsers;
-        echo $arrayUsers[0]->id;
-        $this->send($arrayUsers[0],$message);
+        if(json_decode($message)->device){
+            if(json_decode($message)->image){
+                $this->send($arrayUsers[0],$message);   
+            }else{
+                $device = json_decode($message)->id;
+                $deviceFound = false;
+                $i = 0;
+
+                reset($arrayUsers);
+                while ((list(, $value) = each($arrayUsers)) && !$deviceFound) {
+                    if($device == $value->id){
+                        $deviceFound = true;
+                        $this->send($value,$message);
+
+                    }else{
+                        $i++;
+                    }
+                }
+            }
+        }else{
+            echo $arrayUsers[0]->id;
+            $dataDevice = array("id"=>$user->id, "device"=>$message);
+            echo json_encode($dataDevice);
+            $this->send($arrayUsers[0],json_encode($dataDevice));   
+        }
     }
 
     protected function connected ($user) {
         global $arrayUsers;
         $arrayUsers[] = $user;
-        echo "AGREGO USUARIO--> ",$arrayUsers[0]->id;
         // Do nothing: This is just an echo server, there's no need to track the user.
         // However, if we did care about the users, we would probably have a cookie to
         // parse at this step, would be looking them up in permanent storage, etc.

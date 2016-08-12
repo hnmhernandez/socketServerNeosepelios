@@ -19,7 +19,7 @@
             var socket;
 
             function init() {
-                var host = "ws://192.168.1.171:9000/"; // SET THIS TO YOUR SERVER
+                var host = "ws://192.168.1.171:9000/";
                 try {
                     socket = new WebSocket(host);
                     log('WebSocket - status '+socket.readyState);
@@ -29,9 +29,13 @@
                     };
 
                     socket.onmessage = function(msg) { 
-                        var arrayMsg = msg.data.split(":");
-                        if(arrayMsg[0] == "Device"){
-                            addButton(arrayMsg[1]);
+                        var jsonMsg =JSON.parse(msg.data);
+                        if(jsonMsg.device){
+                            if(jsonMsg.image){
+                                showImage(jsonMsg.image);
+                            }else{
+                                addButton(jsonMsg.device, jsonMsg.id);                                
+                            }
                         }
                         log("Received: "+msg.data); 
                     };
@@ -63,6 +67,7 @@
                     log(ex); 
                 }
             }
+
             function quit(){
                 if (socket != null) {
                     log("Goodbye!");
@@ -76,18 +81,33 @@
                 init();
             }
 
-            //Funciones Extras
-            function addButton(text){
-                var buttonnode= document.createElement('input');
-                buttonnode.setAttribute('type','button');
-                buttonnode.setAttribute('name','sal');
-                buttonnode.setAttribute('value','sal');
-                buttonnode.onclick('onclick',Hi);
-                document.body.appendChild(buttonnode);
+            //Agregar Boton con el nombre del dispositivo
+            function addButton(device, id){
+                var element = document.createElement("input");
+                element.setAttribute('type','button');
+                element.setAttribute('name',device);
+                element.setAttribute('value',device);
+                element.onclick = function() {
+                    requestCapture(id, device, "capture");
+                };
+                document.getElementById("myBody").appendChild(element);
+
             }
 
-            function Hi(){
-                console.log("HOLA")
+            //Pedir Screenshot del dispositivo device
+            function requestCapture(id, device, type){
+                try { 
+                    var json = '{"id":"'+id+'","type":"'+type+'","device":"'+device+'"}';
+                    socket.send(json); 
+                    log('Sent: '+msg); 
+                } catch(ex) { 
+                    log(ex); 
+                }
+            }
+            
+            //Mostrar en pantalla el screenshot capturado
+            function showImage(result){
+                console.log(result);
             }
 
             // Utilities
@@ -97,12 +117,13 @@
         </script>
 
     </head>
-    <body onload="init()">
+    <body onload="init()" id="myBody">
         <h3>WebSocket v2.00</h3>
         <div id="log"></div>
         <input id="msg" type="textbox" onkeypress="onkey(event)"/>
         <button onclick="send()">Send</button>
         <button onclick="quit()">Quit</button>
         <button onclick="reconnect()">Reconnect</button>
+        <img id="captureResult"> 
     </body>
 </html>
