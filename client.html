@@ -20,6 +20,8 @@
 
             function init() {
                 var host = "ws://192.168.1.171:9000/";
+                var ArrayFingerPrints = [];
+
                 try {
                     socket = new WebSocket(host);
                     log('WebSocket - status '+socket.readyState);
@@ -34,7 +36,9 @@
                             if(jsonMsg.image){
                                 showImage(jsonMsg.image);
                             }else{
-                                addButton(jsonMsg.device, jsonMsg.id);                                
+
+                                addButton(jsonMsg.device, jsonMsg.id, jsonMsg.fingerPrint);  
+
                             }
                         }
                         log("Received: "+msg.data); 
@@ -83,15 +87,30 @@
 
             //Agregar Boton con el nombre del dispositivo
             function addButton(device, id){
-                var element = document.createElement("input");
-                element.setAttribute('type','button');
-                element.setAttribute('name',device);
-                element.setAttribute('value',device);
-                element.onclick = function() {
-                    requestCapture(id, device, "capture");
-                };
-                document.getElementById("myBody").appendChild(element);
+                var i = 0;
+                var found = false;
+                while(i<ArrayFingerPrints.length && !found){
+                    if(ArrayFingerPrints[i] == jsonMsg.fingerPrint){
+                        found = true;
+                    }else{
+                        i++;
+                    }
+                }
 
+                if(found){
+                    //todo QUEDASTE ACA
+                    document.getElementsByName(device);
+                }else{
+                    ArrayFingerPrints.push(jsonMsg.fingerPrint);
+                    var element = document.createElement("input");
+                    element.setAttribute('type','button');
+                    element.setAttribute('name',device);
+                    element.setAttribute('value',device);
+                    element.onclick = function() {
+                        requestCapture(id, device, "capture");
+                    };
+                    document.getElementById("myBody").appendChild(element);
+                }
             }
 
             //Pedir Screenshot del dispositivo device
@@ -104,10 +123,11 @@
                     log(ex); 
                 }
             }
-            
+
             //Mostrar en pantalla el screenshot capturado
             function showImage(result){
                 console.log(result);
+                document.getElementById("captureResult").src=result;
             }
 
             // Utilities

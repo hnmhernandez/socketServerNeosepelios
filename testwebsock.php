@@ -9,14 +9,19 @@ class echoServer extends WebSocketServer {
     var $arrayUsers;
     protected function process ($user, $message) {
         global $arrayUsers;
+        
+        //Si ya esta el dispositivo conectado
         if(json_decode($message)->device){
+            
+            //si en el json enviado desde el disposivo hay una imagen, esta es enviada a la web.
             if(json_decode($message)->image){
                 $this->send($arrayUsers[0],$message);   
             }else{
+                
+                //sino se envia el mensaje desde la web al dispositivo solicitando algun servicio.
                 $device = json_decode($message)->id;
                 $deviceFound = false;
                 $i = 0;
-
                 reset($arrayUsers);
                 while ((list(, $value) = each($arrayUsers)) && !$deviceFound) {
                     if($device == $value->id){
@@ -29,10 +34,11 @@ class echoServer extends WebSocketServer {
                 }
             }
         }else{
-            echo $arrayUsers[0]->id;
-            $dataDevice = array("id"=>$user->id, "device"=>$message);
-            echo json_encode($dataDevice);
-            $this->send($arrayUsers[0],json_encode($dataDevice));   
+            
+            //sino esta el dispositivo este se agregar.
+            $deviceNew = json_decode($message);
+            $dataDevice = array("id"=>$user->id, "device"=>$deviceNew->deviceNew, "mac"=>$deviceNew->mac, "fingerPrint"=> $deviceNew->fingerPrint);
+            $this->send($arrayUsers[0],json_encode($dataDevice));
         }
     }
 
