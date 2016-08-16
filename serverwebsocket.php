@@ -57,7 +57,11 @@ class echoServer extends WebSocketServer {
     }
 }
 
-$echo = new echoServer("192.168.1.171","9000");
+/*SERVER LOCAL*/
+//$echo = new echoServer("192.168.1.171","9000");
+
+/*SERVER REMOTO*/
+$echo = new echoServer("0.0.0.0","9999");
 
 
 try {

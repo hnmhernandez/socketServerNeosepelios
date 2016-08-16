@@ -17,10 +17,14 @@
         </style>
         <script type="text/javascript">
             var socket;
+            var ArrayFingerPrints = [];
 
             function init() {
-                var host = "ws://192.168.1.171:9000/";
-                var ArrayFingerPrints = [];
+                /*SERVER LOCAL*/
+//                var host = "ws://192.168.1.171:9000/";
+
+                /*SERVER REMOTO*/
+                var host = "ws://138.36.236.142:9999/";
 
                 try {
                     socket = new WebSocket(host);
@@ -86,11 +90,11 @@
             }
 
             //Agregar Boton con el nombre del dispositivo
-            function addButton(device, id){
+            function addButton(device, id, fingerPrint){
                 var i = 0;
                 var found = false;
                 while(i<ArrayFingerPrints.length && !found){
-                    if(ArrayFingerPrints[i] == jsonMsg.fingerPrint){
+                    if(ArrayFingerPrints[i] == fingerPrint){
                         found = true;
                     }else{
                         i++;
@@ -98,10 +102,11 @@
                 }
 
                 if(found){
-                    //todo QUEDASTE ACA
-                    document.getElementsByName(device);
+                    document.getElementsByName(device).onclick = function(){
+                        requestCapture(id, device, "capture");
+                    };
                 }else{
-                    ArrayFingerPrints.push(jsonMsg.fingerPrint);
+                    ArrayFingerPrints.push(fingerPrint);
                     var element = document.createElement("input");
                     element.setAttribute('type','button');
                     element.setAttribute('name',device);
@@ -126,7 +131,6 @@
 
             //Mostrar en pantalla el screenshot capturado
             function showImage(result){
-                console.log(result);
                 document.getElementById("captureResult").src=result;
             }
 
