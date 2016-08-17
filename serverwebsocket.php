@@ -3,38 +3,56 @@
 
 require_once('./websockets.php');
 
-class echoServer extends WebSocketServer {
-    //protected $maxBufferSize = 1048576; //1MB... overkill for an echo server, but potentially plausible for other applications.
 
+// Conectando, seleccionando la base de datos
+//$link = mysqli_connect('localhost', 'harold', '123456')
+//    or die('No se pudo conectar: ' . mysql_error());
+//echo 'Connected successfully';
+//mysqli_select_db($link,'harold') or die('No se pudo seleccionar la base de datos');
+//
+//// Realizar una consulta MySQL
+//$query = 'SELECT * FROM devices';
+//$result = mysqli_query($link,$query) or die('Consulta fallida: ' . mysqli_error($link));
+
+
+
+class echoServer extends WebSocketServer {
+    
     var $arrayUsers;
     protected function process ($user, $message) {
         global $arrayUsers;
-        
+        echo $message;
+
         //Si ya esta el dispositivo conectado
         if(json_decode($message)->device){
-            
-            //si en el json enviado desde el disposivo hay una imagen, esta es enviada a la web.
-            if(json_decode($message)->image){
-                $this->send($arrayUsers[0],$message);   
-            }else{
-                
-                //sino se envia el mensaje desde la web al dispositivo solicitando algun servicio.
-                $device = json_decode($message)->id;
-                $deviceFound = false;
-                $i = 0;
-                reset($arrayUsers);
-                while ((list(, $value) = each($arrayUsers)) && !$deviceFound) {
-                    if($device == $value->id){
-                        $deviceFound = true;
-                        $this->send($value,$message);
 
-                    }else{
-                        $i++;
+            //si el dispositivo es el servidor, este se coloca de primero en el arrayUsers
+            if(json_decode($message)->device == "server"){
+                array_unshift($arrayUsers, $user);
+            }else{
+                //si en el json enviado desde el disposivo hay una imagen, esta es enviada a la web.
+                if(json_decode($message)->image){
+                    $this->send($arrayUsers[0],$message);   
+                }else{
+
+                    //sino se envia el mensaje desde la web al dispositivo solicitando algun servicio.
+                    $device = json_decode($message)->id;
+                    $deviceFound = false;
+                    $i = 0;
+                    reset($arrayUsers);
+                    while ((list(, $value) = each($arrayUsers)) && !$deviceFound) {
+                        if($device == $value->id){
+                            $deviceFound = true;
+                            $this->send($value,$message);
+
+                        }else{
+                            $i++;
+                        }
                     }
                 }
             }
         }else{
-            
+
             //sino esta el dispositivo este se agregar.
             $deviceNew = json_decode($message);
             $dataDevice = array("id"=>$user->id, "device"=>$deviceNew->deviceNew, "mac"=>$deviceNew->mac, "fingerPrint"=> $deviceNew->fingerPrint);
@@ -58,10 +76,10 @@ class echoServer extends WebSocketServer {
 }
 
 /*SERVER LOCAL*/
-//$echo = new echoServer("192.168.1.171","9000");
+$echo = new echoServer("192.168.1.171","9000");
 
 /*SERVER REMOTO*/
-$echo = new echoServer("0.0.0.0","9999");
+//$echo = new echoServer("0.0.0.0","9999");
 
 
 try {
