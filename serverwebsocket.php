@@ -4,24 +4,24 @@
 require_once('./websockets.php');
 
 
-// Conectando, seleccionando la base de datos
-//$link = mysqli_connect('localhost', 'harold', '123456')
-//    or die('No se pudo conectar: ' . mysql_error());
-//echo 'Connected successfully';
-//mysqli_select_db($link,'harold') or die('No se pudo seleccionar la base de datos');
-//
-//// Realizar una consulta MySQL
-//$query = 'SELECT * FROM devices';
-//$result = mysqli_query($link,$query) or die('Consulta fallida: ' . mysqli_error($link));
+//Conectando, seleccionando la base de datos
+$link = mysqli_connect('localhost', 'harold', '123456')
+    or die('No se pudo conectar: ' . mysql_error());
+echo 'Connected successfully';
+mysqli_select_db($link,'harold') or die('No se pudo seleccionar la base de datos');
+
+// Realizar una consulta MySQL
+$query = 'SELECT * FROM devices';
+$result = mysqli_query($link,$query) or die('Consulta fallida: ' . mysqli_error($link));
 
 
 
 class echoServer extends WebSocketServer {
-    
+
     var $arrayUsers;
     protected function process ($user, $message) {
         global $arrayUsers;
-        echo $message;
+        global $link;
 
         //Si ya esta el dispositivo conectado
         if(json_decode($message)->device){
@@ -56,6 +56,48 @@ class echoServer extends WebSocketServer {
             //sino esta el dispositivo este se agregar.
             $deviceNew = json_decode($message);
             $dataDevice = array("id"=>$user->id, "device"=>$deviceNew->deviceNew, "mac"=>$deviceNew->mac, "fingerPrint"=> $deviceNew->fingerPrint);
+
+            //Buscar en base de datos si el dispositivo ya existe y actualizarle el id
+            $sql = "SELECT fingerprint FROM devices";
+            $result = $link->query($sql);
+
+            if ($result->num_rows > 0) {
+                // actualizar id del dispositivo en la base de datos
+                while($row = $result->fetch_assoc()) {
+                    if($row["fingerprint"] == $deviceNew->fingerPrint){
+                        $sql = "UPDATE devices SET idFromServer='$user->id' WHERE fingerprint='$deviceNew->fingerPrint'";
+                        if ($link->query($sql) === TRUE) {
+                            echo "Record updated successfully";
+                        } else {
+                            echo "Error updating record: " . $link->error;
+                        }   
+                    }else{
+                        echo "yes results";
+                        //insertar en base de datos el dispositivo
+                        $sql = "INSERT INTO devices (fingerprint, idFromServer, device, mac, status)VALUES ('$deviceNew->fingerPrint', '$user->id', '$deviceNew->deviceNew', '$deviceNew->mac','1')";
+
+                        if ($link->query($sql) === TRUE) {
+                            echo "New record created successfully";
+                        } else {
+                            echo "Error: " . $sql . "   " . $link->error;
+                        }
+                    }
+                }
+            } else {
+                echo "0 results";
+                //insertar en base de datos el dispositivo
+                $sql = "INSERT INTO devices (fingerprint, idFromServer, device, mac, status)VALUES ('$deviceNew->fingerPrint', '$user->id', '$deviceNew->deviceNew', '$deviceNew->mac','1')";
+
+                if ($link->query($sql) === TRUE) {
+                    echo "New record created successfully";
+                } else {
+                    echo "Error: " . $sql . "   " . $link->error;
+                }
+            }
+
+
+            //            $link->close();
+
             $this->send($arrayUsers[0],json_encode($dataDevice));
         }
     }
