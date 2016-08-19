@@ -23,9 +23,26 @@ class echoServer extends WebSocketServer {
         global $arrayUsers;
         global $link;
 
+        echo $message;
+        if($message == "GETALLDEVICES"){
+            echo "PASO POR ACA";
+            global $link;
+            $sql = "SELECT * FROM devices";
+            $result = $link->query($sql);
+            $dataDevice;
+            if ($result->num_rows > 0) {
+                while($row = $result->fetch_assoc()) {
+                    $dataDevice[] = array("id"=>$row["idFromServer"], "device"=>$row["device"], "mac"=>$row["mac"], "fingerPrint"=> $row["fingerprint"]);
+                }
+                echo json_encode($dataDevice);
+            } else {
+                echo "idFromServer no encontrado" . "\n";
+            }
+        }
+
         //Si ya esta el dispositivo conectado
         if(json_decode($message)->device){
-
+            echo $message;
             //si el dispositivo es el servidor, este se coloca de primero en el arrayUsers
             if(json_decode($message)->device == "server"){
                 array_unshift($arrayUsers, $user);
@@ -49,6 +66,28 @@ class echoServer extends WebSocketServer {
                             $i++;
                         }
                     }
+
+
+
+                    //                    $sql = "SELECT idFromServer, socketFromServer FROM devices";
+                    //                    $result = $link->query($sql);
+                    //
+                    //                    if ($result->num_rows > 0) {
+                    //                        while($row = $result->fetch_assoc()) {
+                    //                            echo "ENTRO ACA DONDE ---> " . $row["idFromServer"] . "----" . $row["socketFromServer"] . "\n";
+                    //                            $userSelect = new WebSocketUser($row["idFromServer"], $row["socketFromServer"]);
+                    //                            echo $userSelect->id;
+                    //                            echo $userSelect->socket;
+                    //                            $this->send($userSelect,$message);
+                    //                        }
+                    //                        //                        while($row = $result->fetch_assoc()) {
+                    //                        //                            echo "id: " . $row["id"]. " - Name: " . $row["firstname"]. " " . $row["lastname"]. "<br>";
+                    //                        //                        }
+                    //                    } else {
+                    //                        echo "idFromServer no encontrado" . "\n";
+                    //                    }
+
+
                 }
             }
         }else{
@@ -57,43 +96,28 @@ class echoServer extends WebSocketServer {
             $deviceNew = json_decode($message);
             $dataDevice = array("id"=>$user->id, "device"=>$deviceNew->deviceNew, "mac"=>$deviceNew->mac, "fingerPrint"=> $deviceNew->fingerPrint);
 
-            //Buscar en base de datos si el dispositivo ya existe y actualizarle el id
-            $sql = "SELECT fingerprint FROM devices";
+            //Buscar en base de datos si el dispositivo ya existe y actualizarle el id, sino insertarlo en la base de datos
+            $sql = "UPDATE devices SET idFromServer='$user->id', socketFromServer='$user->socket', status='1' WHERE fingerprint='$deviceNew->fingerPrint'";
             $result = $link->query($sql);
+            if ($result  === TRUE) {
+                if(mysqli_affected_rows($link) > 0){
 
-            if ($result->num_rows > 0) {
-                // actualizar id del dispositivo en la base de datos
-                while($row = $result->fetch_assoc()) {
-                    if($row["fingerprint"] == $deviceNew->fingerPrint){
-                        $sql = "UPDATE devices SET idFromServer='$user->id' WHERE fingerprint='$deviceNew->fingerPrint'";
-                        if ($link->query($sql) === TRUE) {
-                            echo "Record updated successfully";
-                        } else {
-                            echo "Error updating record: " . $link->error;
-                        }   
-                    }else{
-                        echo "yes results";
-                        //insertar en base de datos el dispositivo
-                        $sql = "INSERT INTO devices (fingerprint, idFromServer, device, mac, status)VALUES ('$deviceNew->fingerPrint', '$user->id', '$deviceNew->deviceNew', '$deviceNew->mac','1')";
+                    //Actualizado en base de datos el dispositivo
+                    echo "Dispositivo conectado y actualizado: " . $deviceNew->fingerPrint . "\n";
+                }else{
 
-                        if ($link->query($sql) === TRUE) {
-                            echo "New record created successfully";
-                        } else {
-                            echo "Error: " . $sql . "   " . $link->error;
-                        }
+                    //Insertar en base de datos el dispositivo nuevo
+                    $sql = "INSERT INTO devices (fingerprint, idFromServer, device, mac, status, socketFromServer)VALUES ('$deviceNew->fingerPrint', '$user->id', '$deviceNew->deviceNew', '$deviceNew->mac','1', '$user->socket')";
+
+                    if ($link->query($sql) === TRUE) {
+                        echo "Dispositivo nuevo agregado: " . $deviceNew->deviceNew . " - " . $deviceNew->fingerPrint . "\n";
+                    } else {
+                        echo "Error: " . $sql . "   " . $link->error;
                     }
                 }
             } else {
-                echo "0 results";
-                //insertar en base de datos el dispositivo
-                $sql = "INSERT INTO devices (fingerprint, idFromServer, device, mac, status)VALUES ('$deviceNew->fingerPrint', '$user->id', '$deviceNew->deviceNew', '$deviceNew->mac','1')";
-
-                if ($link->query($sql) === TRUE) {
-                    echo "New record created successfully";
-                } else {
-                    echo "Error: " . $sql . "   " . $link->error;
-                }
-            }
+                echo "Error: " . $sql . "   " . $link->error;
+            }  
 
 
             //            $link->close();
@@ -111,9 +135,31 @@ class echoServer extends WebSocketServer {
     }
 
     protected function closed ($user) {
-        // Do nothing: This is where cleanup would go, in case the user had any sort of
-        // open files or other objects associated with them.  This runs after the socket 
-        // has been closed, so there is no need to clean up the socket itself here.
+        global $link;
+
+        //Cambiar status del disposivo a desconectado
+        $sql = "UPDATE devices SET status='0' WHERE idFromServer='$user->id'";
+        if ($link->query($sql) === TRUE) {
+            echo "Se cambio el status con exito";
+        } else {
+            echo "Error updating record: " . $link->error;
+        }   
+    }
+
+    protected function getAllDevices(){
+        echo "PASO POR ACA";
+        global $link;
+        $sql = "SELECT * FROM devices";
+        $result = $link->query($sql);
+        $dataDevice;
+        if ($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $dataDevice[] = array("id"=>$row["idFromServer"], "device"=>$row["device"], "mac"=>$row["mac"], "fingerPrint"=> $row["fingerprint"]);
+            }
+            echo json_encode($dataDevice);
+        } else {
+            echo "idFromServer no encontrado" . "\n";
+        }
     }
 }
 
