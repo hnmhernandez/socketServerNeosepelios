@@ -1,5 +1,6 @@
 <html>
     <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>WebSocket</title>
         <style type="text/css">
             html,body {
@@ -21,10 +22,10 @@
 
             function init() {
                 /*SERVER LOCAL*/
-                var host = "ws://192.168.1.171:9000/";
+                //                var host = "ws://192.168.1.171:9000/";
 
                 /*SERVER REMOTO*/
-                //                var host = "ws://138.36.236.142:9999/";
+                var host = "ws://138.36.236.142:9999/";
 
                 try {
                     socket = new WebSocket(host);
@@ -39,12 +40,23 @@
 
                     socket.onmessage = function(msg) { 
                         var jsonMsg =JSON.parse(msg.data);
-                        if(jsonMsg.device){
-                            if(jsonMsg.image){
-                                showImage(jsonMsg.image);
-                            }else{
-                                addButton(jsonMsg.device, jsonMsg.id, jsonMsg.fingerPrint);  
-
+                        if(jsonMsg.action == "GETALLDEVICES"){
+                            for (var i = 0; i<jsonMsg.devices.length;i++){
+                                if(jsonMsg.devices[i].device != ""){
+                                    addButton(jsonMsg.devices[i].device, jsonMsg.devices[i].id, jsonMsg.devices[i].fingerPrint, jsonMsg.devices[i].status);                                     
+                                }
+                            }
+                        }else if(jsonMsg.action == "DISCONNETED"){
+                            document.getElementById(jsonMsg.devices[0].device).disabled = true;
+                        }else{
+                            console.log("ENTROOO");
+                            console.log(jsonMsg.device);
+                            if(jsonMsg.device){
+                                if(jsonMsg.image){
+                                    showImage(jsonMsg.image);
+                                }else{
+                                    addButton(jsonMsg.device, jsonMsg.id, jsonMsg.fingerPrint , jsonMsg.status);  
+                                }
                             }
                         }
                         log("Received: "+msg.data); 
@@ -62,22 +74,22 @@
 
             function send(){
                 socket.send("GETALLDEVICES"); 
-                
-//                var txt,msg;
-//                txt = $("msg");
-//                msg = txt.value;
-//                if(!msg) { 
-//                    alert("Message can not be empty"); 
-//                    return; 
-//                }
-//                txt.value="";
-//                txt.focus();
-//                try { 
-//                    socket.send(msg); 
-//                    log('Sent: '+msg); 
-//                } catch(ex) { 
-//                    log(ex); 
-//                }
+
+                //                var txt,msg;
+                //                txt = $("msg");
+                //                msg = txt.value;
+                //                if(!msg) { 
+                //                    alert("Message can not be empty"); 
+                //                    return; 
+                //                }
+                //                txt.value="";
+                //                txt.focus();
+                //                try { 
+                //                    socket.send(msg); 
+                //                    log('Sent: '+msg); 
+                //                } catch(ex) { 
+                //                    log(ex); 
+                //                }
             }
 
             function quit(){
@@ -94,7 +106,7 @@
             }
 
             //Agregar Boton con el nombre del dispositivo
-            function addButton(device, id, fingerPrint){
+            function addButton(device, id, fingerPrint, status){
                 var i = 0;
                 var found = false;
                 while(i<ArrayFingerPrints.length && !found){
@@ -106,26 +118,34 @@
                 }
 
                 if(found){
+                    console.log("PASO POR FOUND");
                     document.getElementsByName(device).onclick = function(){
                         requestCapture(id, device, "capture");
                     };
+                    document.getElementById(device).disabled = false;
                 }else{
                     ArrayFingerPrints.push(fingerPrint);
                     var element = document.createElement("input");
                     element.setAttribute('type','button');
                     element.setAttribute('name',device);
+                    element.setAttribute('id',device);
                     element.setAttribute('value',device);
                     element.onclick = function() {
-                        requestCapture(id, device, "capture");
+                        requestCapture(id, device, fingerPrint, "capture");
                     };
+                    if(status == 0){
+                        element.disabled = true;
+                    }else{
+                        element.disabled = false;
+                    }
                     document.getElementById("myBody").appendChild(element);
                 }
             }
 
             //Pedir Screenshot del dispositivo device
-            function requestCapture(id, device, type){
+            function requestCapture(id, device, fingerPrint, type){
                 try { 
-                    var json = '{"id":"'+id+'","type":"'+type+'","device":"'+device+'"}';
+                    var json = '{"id":"'+id+'","type":"'+type+'","device":"'+device+'","fingerPrint":"'+fingerPrint+'"}';
                     socket.send(json); 
                     log('Sent: '+msg); 
                 } catch(ex) { 
