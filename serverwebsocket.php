@@ -62,6 +62,7 @@ class echoServer extends WebSocketServer {
                         if($device == $value->id){
                             $deviceFound = true;
                             echo "Se ha solicitado una accion de tipo: " . json_decode($message)->type . " - para: " . json_decode($message)->device . " - " . json_decode($message)->fingerPrint . "\n";
+                            echo "AQUIIII ESTAAAA--> " . $value->id . "  " . $message."\n";
                             $this->send($value,$message);
                         }else{
                             $i++;

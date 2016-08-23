@@ -22,7 +22,7 @@
 
             function init() {
                 /*SERVER LOCAL*/
-                //                var host = "ws://192.168.1.171:9000/";
+//                                var host = "ws://192.168.1.171:9000/";
 
                 /*SERVER REMOTO*/
                 var host = "ws://138.36.236.142:9999/";
@@ -49,8 +49,6 @@
                         }else if(jsonMsg.action == "DISCONNETED"){
                             document.getElementById(jsonMsg.devices[0].device).disabled = true;
                         }else{
-                            console.log("ENTROOO");
-                            console.log(jsonMsg.device);
                             if(jsonMsg.device){
                                 if(jsonMsg.image){
                                     showImage(jsonMsg.image);
