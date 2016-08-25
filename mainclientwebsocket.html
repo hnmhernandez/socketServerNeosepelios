@@ -2,30 +2,17 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>WebSocket</title>
-        <style type="text/css">
-            html,body {
-                font:normal 0.9em arial,helvetica;
-            }
-            #log {
-                width:600px; 
-                height:300px; 
-                border:1px solid #7F9DB9; 
-                overflow:auto;
-            }
-            #msg {
-                width:400px;
-            }
-        </style>
+        <link rel="stylesheet" type="text/css" href="css/style.css">
         <script type="text/javascript">
             var socket;
             var ArrayFingerPrints = [];
 
             function init() {
                 /*SERVER LOCAL*/
-//                                var host = "ws://192.168.1.171:9000/";
+                var host = "ws://192.168.1.171:9000/";
 
                 /*SERVER REMOTO*/
-                var host = "ws://138.36.236.142:9999/";
+                //                var host = "ws://138.36.236.142:9999/";
 
                 try {
                     socket = new WebSocket(host);
@@ -116,9 +103,8 @@
                 }
 
                 if(found){
-                    console.log("PASO POR FOUND");
-                    document.getElementsByName(device).onclick = function(){
-                        requestCapture(id, device, "capture");
+                    document.getElementById(device).onclick = function(){
+                        requestCapture(id, device, fingerPrint, "capture");
                     };
                     document.getElementById(device).disabled = false;
                 }else{
@@ -170,6 +156,20 @@
         <button onclick="send()">Send</button>
         <button onclick="quit()">Quit</button>
         <button onclick="reconnect()">Reconnect</button>
-        <img id="captureResult" style="height: 1000px;"> 
+
+        <div class="box">
+            <a class="button" href="#popup1">Let me Pop up</a>
+        </div>
+
+        <div id="popup1" class="overlay">
+            <div class="popup">
+                <h2>Here i am</h2>
+                <a class="close" href="#">&times;</a>
+                <div class="content">
+                    <img id="captureResult"> 
+                </div>
+            </div>
+        </div>  
+
     </body>
 </html>

@@ -1,23 +1,23 @@
 #!/usr/bin/env php
 <?php
 
-require_once('./websockets.php');
+require_once('websockets.php');
 
 //Conectando, seleccionando la base de datos LOCAL
 
-//$link = mysqli_connect('localhost', 'harold', '123456', 'neosepeliosBDsocket');
-//if (mysqli_connect_errno()){
-//  echo "Failed to connect to MySQL: " . mysqli_connect_error();
-//}
-//echo 'Connected successfully';
+$link = mysqli_connect('localhost', 'harold', '123456', 'neosepeliosBDsocket');
+if (mysqli_connect_errno()){
+  echo "Failed to connect to MySQL: " . mysqli_connect_error();
+}
+echo 'Connected successfully';
 
 //Conectando, seleccionando la base de datos REMOTO
 
-$link = mysqli_connect('localhost', 'socket_user', 'neosepel', 'neosepel_ni_socket');
-if (mysqli_connect_errno()){
-    echo "Failed to connect to MySQL: " . mysqli_connect_error();
-}
-echo 'Connected successfully';
+//$link = mysqli_connect('localhost', 'socket_user', 'neosepel', 'neosepel_ni_socket');
+//if (mysqli_connect_errno()){
+//    echo "Failed to connect to MySQL: " . mysqli_connect_error();
+//}
+//echo 'Connected successfully';
 
 
 class echoServer extends WebSocketServer {
@@ -62,7 +62,6 @@ class echoServer extends WebSocketServer {
                         if($device == $value->id){
                             $deviceFound = true;
                             echo "Se ha solicitado una accion de tipo: " . json_decode($message)->type . " - para: " . json_decode($message)->device . " - " . json_decode($message)->fingerPrint . "\n";
-                            echo "AQUIIII ESTAAAA--> " . $value->id . "  " . $message."\n";
                             $this->send($value,$message);
                         }else{
                             $i++;
@@ -81,7 +80,6 @@ class echoServer extends WebSocketServer {
             $result = $link->query($sql);
             if ($result  === TRUE) {
                 if(mysqli_affected_rows($link) > 0){
-
                     //Actualizado en base de datos el dispositivo
                     echo "Dispositivo conectado y actualizado: " . $deviceNew->deviceNew . " - " . $deviceNew->fingerPrint . "\n";
                 }else{
@@ -109,9 +107,6 @@ class echoServer extends WebSocketServer {
     protected function connected ($user) {
         global $arrayUsers;
         $arrayUsers[] = $user;
-        // Do nothing: This is just an echo server, there's no need to track the user.
-        // However, if we did care about the users, we would probably have a cookie to
-        // parse at this step, would be looking them up in permanent storage, etc.
     }
 
     protected function closed ($user) {
@@ -129,20 +124,17 @@ class echoServer extends WebSocketServer {
             if ($result->num_rows > 0) {
                 while($row = $result->fetch_assoc()) {
                     $dataDevice[] = array("id"=>$row["idFromServer"], "device"=>$row["device"], "mac"=>$row["mac"], "fingerPrint"=> $row["fingerprint"], "status"=> $row["status"]);
+                    echo "Dispositivo DESCONECTADO: " . $row["device"]. " - " . $row["fingerprint"]. "\n";
+
                 }
                 $dataSend = array("action"=>"DISCONNETED", "devices"=>$dataDevice);
+                $this->send($arrayUsers[0], json_encode($dataSend));   
                 foreach (array_keys($arrayUsers, $user->id) as $key) {
                     unset($arrayUsers[$key]);
                 }
-                $this->send($arrayUsers[0], json_encode($dataSend));   
-
-                echo "Dispositivo DESCONECTADO: " . $dataDevice->device . " - " . $dataDevice->fingerPrint . "\n";
-
             } else {
                 echo "idFromServer no encontrado" . "\n";
             }
-
-
         } else {
             echo "Error updating record: " . $link->error;
         }   
@@ -150,10 +142,10 @@ class echoServer extends WebSocketServer {
 }
 
 /*SERVER LOCAL*/
-//$echo = new echoServer("192.168.1.171","9000");
+$echo = new echoServer("192.168.1.171","9000");
 
 /*SERVER REMOTO*/
-$echo = new echoServer("0.0.0.0","9999");
+//$echo = new echoServer("0.0.0.0","9999");
 
 
 try {
