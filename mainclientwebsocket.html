@@ -28,17 +28,67 @@
                     socket.onmessage = function(msg) { 
                         var jsonMsg =JSON.parse(msg.data);
                         if(jsonMsg.action == "GETALLDEVICES"){
+
+
+                            var table = document.getElementById("tableDevices");
+
                             for (var i = 0; i<jsonMsg.devices.length;i++){
+
+
+
+
+
                                 if(jsonMsg.devices[i].device != ""){
-                                    addButton(jsonMsg.devices[i].device, jsonMsg.devices[i].id, jsonMsg.devices[i].fingerPrint, jsonMsg.devices[i].status);                                     
+                                    var device = jsonMsg.devices[i].device;
+                                    var id = jsonMsg.devices[i].id;
+                                    var fingerPrint = jsonMsg.devices[i].fingerPrint;
+                                    var status = jsonMsg.devices[i].status;
+
+                                    ArrayFingerPrints.push(fingerPrint);
+                                    var row = table.insertRow(i+1);
+                                    row.setAttribute("id", "row" + device);
+
+                                    var cell1 = row.insertCell(0);
+                                    cell1.innerHTML = device;
+
+                                    var cell2 = row.insertCell(1);
+                                    cell2.innerHTML = fingerPrint;
+
+                                    var cell3 = row.insertCell(2);
+                                    var element = document.createElement("input");
+                                    element.setAttribute('type','button');
+                                    element.setAttribute('name',device);
+                                    element.setAttribute('id',device);
+                                    if(status == 0){
+                                        element.disabled = true;
+                                        row.setAttribute("class", "rowDeviceDisconnect");
+                                    }else{
+                                        element.disabled = false;
+                                        row.setAttribute("class", "rowDeviceConnect");
+                                    }
+
+                                    element.onclick = function() {
+                                        requestCapture(id, device, fingerPrint, "capture");
+                                    };
+
+                                    cell3.setAttribute('class', 'btnCapture');
+
+                                    cell3.appendChild(element);
+
+
+
+                                    //                                    addButton(jsonMsg.devices[i].device, jsonMsg.devices[i].id, jsonMsg.devices[i].fingerPrint, jsonMsg.devices[i].status);                                     
                                 }
                             }
                         }else if(jsonMsg.action == "DISCONNETED"){
+                            console.log("ENTRO ACA");
+                            console.log(jsonMsg.devices[0].device);
                             document.getElementById(jsonMsg.devices[0].device).disabled = true;
+                            document.getElementById("row" + jsonMsg.devices[0].device).setAttribute("class", "rowDeviceDisconnect");
                         }else{
                             if(jsonMsg.device){
                                 if(jsonMsg.image){
-                                    showImage(jsonMsg.image);
+                                    showImage(jsonMsg.image, jsonMsg.device);
                                 }else{
                                     addButton(jsonMsg.device, jsonMsg.id, jsonMsg.fingerPrint , jsonMsg.status);  
                                 }
@@ -107,28 +157,47 @@
                         requestCapture(id, device, fingerPrint, "capture");
                     };
                     document.getElementById(device).disabled = false;
+                    document.getElementById("row" + device).setAttribute("class", "rowDeviceConnect");
                 }else{
                     ArrayFingerPrints.push(fingerPrint);
+
+                    var table = document.getElementById("tableDevices");
+                    var row = table.insertRow(i+1);
+                    row.setAttribute("id", "row" + device);
+
+                    var cell1 = row.insertCell(0);
+                    cell1.innerHTML = device;
+
+                    var cell2 = row.insertCell(1);
+                    cell2.innerHTML = fingerPrint;
+
+                    var cell3 = row.insertCell(2);
                     var element = document.createElement("input");
                     element.setAttribute('type','button');
                     element.setAttribute('name',device);
                     element.setAttribute('id',device);
-                    element.setAttribute('value',device);
+                    if(status == 0){
+                        element.disabled = true;
+                        row.setAttribute("class", "rowDeviceDisconnect");
+                    }else{
+                        element.disabled = false;
+                        row.setAttribute("class", "rowDeviceConnect");
+                    }
+
                     element.onclick = function() {
                         requestCapture(id, device, fingerPrint, "capture");
                     };
-                    if(status == 0){
-                        element.disabled = true;
-                    }else{
-                        element.disabled = false;
-                    }
-                    document.getElementById("myBody").appendChild(element);
+
+                    cell3.setAttribute('class', 'btnCapture');
+
+                    cell3.appendChild(element);
                 }
             }
 
             //Pedir Screenshot del dispositivo device
             function requestCapture(id, device, fingerPrint, type){
                 try { 
+                    $("loader").style.visibility = "visible";
                     var json = '{"id":"'+id+'","type":"'+type+'","device":"'+device+'","fingerPrint":"'+fingerPrint+'"}';
                     socket.send(json); 
                     log('Sent: '+msg); 
@@ -138,8 +207,18 @@
             }
 
             //Mostrar en pantalla el screenshot capturado
-            function showImage(result){
+            function showImage(result, device){
+                $("loader").style.visibility = "collapse";
+                $("popup1").style.visibility = "visible";
+                $("popup1").style.opacity = 1;
+                $("deviceName").innerHTML = device + " - Screenshot";
                 document.getElementById("captureResult").src=result;
+            }
+
+            //Cerrar popup
+            function closePopup(){
+                $("popup1").style.visibility = "hidden";
+                $("popup1").style.opacity = 0;
             }
 
             // Utilities
@@ -157,14 +236,20 @@
         <button onclick="quit()">Quit</button>
         <button onclick="reconnect()">Reconnect</button>
 
-        <div class="box">
-            <a class="button" href="#popup1">Let me Pop up</a>
-        </div>
+        <div id="loader" style="visibility:collapse" class="loader">Loading...</div>
+
+        <table id="tableDevices">
+            <tr>
+                <th>Device</th>
+                <th>Fingerprint</th>
+                <th>Capture</th>
+            </tr>
+        </table>
 
         <div id="popup1" class="overlay">
             <div class="popup">
-                <h2>Here i am</h2>
-                <a class="close" href="#">&times;</a>
+                <h2 id="deviceName">Here i am</h2>
+                <a class="close" href="#" onclick="closePopup()">&times;</a>
                 <div class="content">
                     <img id="captureResult"> 
                 </div>
