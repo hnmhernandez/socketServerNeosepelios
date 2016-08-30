@@ -20,69 +20,60 @@
 
                     socket.onopen    = function(msg) {
                         log("Welcome - status "+this.readyState);
-                        var json = '{"device":"server"}';
-                        socket.send(json); 
-                        log('Sent: '+json); 
                     };
 
                     socket.onmessage = function(msg) { 
                         var jsonMsg =JSON.parse(msg.data);
+                        console.log(msg);
                         if(jsonMsg.action == "GETALLDEVICES"){
+                            //Mostrar todos los dispositivos del usuario si en el Json viene action = GETALLDEVICES
+                            if(jsonMsg.devices){
+                                var table = document.getElementById("tableDevices");
+                                for (var i = 0; i<jsonMsg.devices.length;i++){
+                                    if(jsonMsg.devices[i].device != ""){
+                                        var device = jsonMsg.devices[i].device;
+                                        var id = jsonMsg.devices[i].id;
+                                        var fingerPrint = jsonMsg.devices[i].fingerPrint;
+                                        var status = jsonMsg.devices[i].status;
 
+                                        ArrayFingerPrints.push(fingerPrint);
+                                        var row = table.insertRow(i+1);
+                                        row.setAttribute("id", "row" + device);
 
-                            var table = document.getElementById("tableDevices");
+                                        var cell1 = row.insertCell(0);
+                                        cell1.innerHTML = device;
 
-                            for (var i = 0; i<jsonMsg.devices.length;i++){
+                                        var cell2 = row.insertCell(1);
+                                        cell2.innerHTML = fingerPrint;
 
+                                        var cell3 = row.insertCell(2);
+                                        var element = document.createElement("input");
+                                        element.setAttribute('type','button');
+                                        element.setAttribute('name',device);
+                                        element.setAttribute('id',device);
+                                        if(status == 0){
+                                            element.disabled = true;
+                                            row.setAttribute("class", "rowDeviceDisconnect");
+                                        }else{
+                                            element.disabled = false;
+                                            row.setAttribute("class", "rowDeviceConnect");
+                                        }
 
+                                        element.onclick = function() {
+                                            requestCapture(id, device, fingerPrint, "capture");
+                                        };
 
-
-
-                                if(jsonMsg.devices[i].device != ""){
-                                    var device = jsonMsg.devices[i].device;
-                                    var id = jsonMsg.devices[i].id;
-                                    var fingerPrint = jsonMsg.devices[i].fingerPrint;
-                                    var status = jsonMsg.devices[i].status;
-
-                                    ArrayFingerPrints.push(fingerPrint);
-                                    var row = table.insertRow(i+1);
-                                    row.setAttribute("id", "row" + device);
-
-                                    var cell1 = row.insertCell(0);
-                                    cell1.innerHTML = device;
-
-                                    var cell2 = row.insertCell(1);
-                                    cell2.innerHTML = fingerPrint;
-
-                                    var cell3 = row.insertCell(2);
-                                    var element = document.createElement("input");
-                                    element.setAttribute('type','button');
-                                    element.setAttribute('name',device);
-                                    element.setAttribute('id',device);
-                                    if(status == 0){
-                                        element.disabled = true;
-                                        row.setAttribute("class", "rowDeviceDisconnect");
-                                    }else{
-                                        element.disabled = false;
-                                        row.setAttribute("class", "rowDeviceConnect");
+                                        cell3.setAttribute('class', 'btnCapture');
+                                        cell3.appendChild(element);
                                     }
-
-                                    element.onclick = function() {
-                                        requestCapture(id, device, fingerPrint, "capture");
-                                    };
-
-                                    cell3.setAttribute('class', 'btnCapture');
-
-                                    cell3.appendChild(element);
-
-
-
-                                    //                                    addButton(jsonMsg.devices[i].device, jsonMsg.devices[i].id, jsonMsg.devices[i].fingerPrint, jsonMsg.devices[i].status);                                     
                                 }
+                                $("main").style.visibility = "visible";
+                            }else{
+                                log("Este usuario no posee dispositivos registrados")
                             }
+
                         }else if(jsonMsg.action == "DISCONNETED"){
-                            console.log("ENTRO ACA");
-                            console.log(jsonMsg.devices[0].device);
+                            //Desconectar el dispositivo del usuario si en el Json viene action = DISCONNETED
                             document.getElementById(jsonMsg.devices[0].device).disabled = true;
                             document.getElementById("row" + jsonMsg.devices[0].device).setAttribute("class", "rowDeviceDisconnect");
                         }else{
@@ -94,6 +85,7 @@
                                 }
                             }
                         }
+                        $("loader").style.visibility = "hidden";
                         log("Received: "+msg.data); 
                     };
 
@@ -104,7 +96,6 @@
                 catch(ex){ 
                     log(ex); 
                 }
-                $("msg").focus();
             }
 
             function send(){
@@ -156,8 +147,13 @@
                     document.getElementById(device).onclick = function(){
                         requestCapture(id, device, fingerPrint, "capture");
                     };
-                    document.getElementById(device).disabled = false;
-                    document.getElementById("row" + device).setAttribute("class", "rowDeviceConnect");
+                    if(status == 0){
+                        document.getElementById(device).disabled = true;
+                        document.getElementById("row" + device).setAttribute("class", "rowDeviceDisconnect");
+                    }else{
+                        document.getElementById(device).disabled = false;
+                        document.getElementById("row" + device).setAttribute("class", "rowDeviceConnect");
+                    }
                 }else{
                     ArrayFingerPrints.push(fingerPrint);
 
@@ -191,6 +187,7 @@
                     cell3.setAttribute('class', 'btnCapture');
 
                     cell3.appendChild(element);
+                    $("main").style.visibility = "visible";
                 }
             }
 
@@ -200,7 +197,7 @@
                     $("loader").style.visibility = "visible";
                     var json = '{"id":"'+id+'","type":"'+type+'","device":"'+device+'","fingerPrint":"'+fingerPrint+'"}';
                     socket.send(json); 
-                    log('Sent: '+msg); 
+                    log('Sent: '+json); 
                 } catch(ex) { 
                     log(ex); 
                 }
@@ -221,6 +218,16 @@
                 $("popup1").style.opacity = 0;
             }
 
+            //Loguear usuario
+            function loginAction(){
+                $("loader").style.visibility = "visible";
+                var emailClient = $("edtEmail").value;
+                var password = $("edtPassword").value;
+                var json = '{"device":"server","emailClient":"'+emailClient+'","password":"'+password+'"}';
+                socket.send(json);
+                log('Sent: '+json);
+            }
+
             // Utilities
             function $(id){ return document.getElementById(id); }
             function log(msg){ $("log").innerHTML+="<br>"+msg; }
@@ -230,31 +237,37 @@
     </head>
     <body onload="init()" id="myBody">
         <h3>WebSocket v2.00</h3>
-        <div id="log"></div>
-        <input id="msg" type="textbox" onkeypress="onkey(event)"/>
-        <button onclick="send()">Send</button>
-        <button onclick="quit()">Quit</button>
-        <button onclick="reconnect()">Reconnect</button>
+        <div id = "login">
+            <input id="edtEmail" type="text" placeholder="Email" autofocus/>
+            <input id="edtPassword" type="text"  placeholder="Password"/>
+            <input id="btnLogin" type="button" onclick="loginAction()" value="Login"/>
+            <div id="log"></div>
+        </div>
 
         <div id="loader" style="visibility:collapse" class="loader">Loading...</div>
 
-        <table id="tableDevices">
-            <tr>
-                <th>Device</th>
-                <th>Fingerprint</th>
-                <th>Capture</th>
-            </tr>
-        </table>
+        <div id="main" style="visibility:hidden">
+            <button onclick="send()">Send</button>
+            <button onclick="quit()">Quit</button>
+            <button onclick="reconnect()">Reconnect</button>
 
-        <div id="popup1" class="overlay">
-            <div class="popup">
-                <h2 id="deviceName">Here i am</h2>
-                <a class="close" href="#" onclick="closePopup()">&times;</a>
-                <div class="content">
-                    <img id="captureResult"> 
+            <table id="tableDevices">
+                <tr>
+                    <th>Device</th>
+                    <th>Fingerprint</th>
+                    <th>Capture</th>
+                </tr>
+            </table>
+
+            <div id="popup1" class="overlay">
+                <div class="popup">
+                    <h2 id="deviceName">Here i am</h2>
+                    <a class="close" href="#" onclick="closePopup()">&times;</a>
+                    <div class="content">
+                        <img id="captureResult"> 
+                    </div>
                 </div>
-            </div>
-        </div>  
-
+            </div>  
+        </div>
     </body>
 </html>
