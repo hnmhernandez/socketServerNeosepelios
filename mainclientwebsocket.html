@@ -9,10 +9,10 @@
 
             function init() {
                 /*SERVER LOCAL*/
-                var host = "ws://192.168.1.171:9000/";
+//                var host = "ws://192.168.1.171:9000/";
 
                 /*SERVER REMOTO*/
-                //                var host = "ws://138.36.236.142:9999/";
+                                var host = "ws://138.36.236.142:9999/";
 
                 try {
                     socket = new WebSocket(host);
@@ -208,7 +208,7 @@
                 $("loader").style.visibility = "collapse";
                 $("popup1").style.visibility = "visible";
                 $("popup1").style.opacity = 1;
-                $("deviceName").innerHTML = device + " - Screenshot";
+                $("deviceName").innerHTML = device + " - Captura";
                 document.getElementById("captureResult").src=result;
             }
 
@@ -222,8 +222,7 @@
             function loginAction(){
                 $("loader").style.visibility = "visible";
                 var emailClient = $("edtEmail").value;
-                var password = $("edtPassword").value;
-                var json = '{"device":"server","emailClient":"'+emailClient+'","password":"'+password+'"}';
+                var json = '{"device":"server","emailClient":"'+emailClient+'"}';
                 socket.send(json);
                 log('Sent: '+json);
             }
@@ -239,7 +238,6 @@
         <h3>WebSocket v2.00</h3>
         <div id = "login">
             <input id="edtEmail" type="text" placeholder="Email" autofocus/>
-            <input id="edtPassword" type="text"  placeholder="Password"/>
             <input id="btnLogin" type="button" onclick="loginAction()" value="Login"/>
             <div id="log"></div>
         </div>
@@ -247,21 +245,20 @@
         <div id="loader" style="visibility:collapse" class="loader">Loading...</div>
 
         <div id="main" style="visibility:hidden">
-            <button onclick="send()">Send</button>
-            <button onclick="quit()">Quit</button>
-            <button onclick="reconnect()">Reconnect</button>
+            <button onclick="quit()">Desconectar</button>
+            <button onclick="reconnect()">Reconectar</button>
 
             <table id="tableDevices">
                 <tr>
-                    <th>Device</th>
+                    <th>Dispositivo</th>
                     <th>Fingerprint</th>
-                    <th>Capture</th>
+                    <th>Captura</th>
                 </tr>
             </table>
 
             <div id="popup1" class="overlay">
                 <div class="popup">
-                    <h2 id="deviceName">Here i am</h2>
+                    <h2 id="deviceName"></h2>
                     <a class="close" href="#" onclick="closePopup()">&times;</a>
                     <div class="content">
                         <img id="captureResult"> 

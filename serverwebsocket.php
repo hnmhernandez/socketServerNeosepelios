@@ -5,19 +5,19 @@ require_once('websockets.php');
 
 //Conectando, seleccionando la base de datos LOCAL
 
-$link = mysqli_connect('localhost', 'harold', '123456', 'neosepeliosBDsocket');
-if (mysqli_connect_errno()){
-    echo "Failed to connect to MySQL: " . mysqli_connect_error();
-}
-echo 'Connected successfully';
-
-//Conectando, seleccionando la base de datos REMOTO
-
-//$link = mysqli_connect('localhost', 'socket_user', 'neosepel', 'neosepel_ni_socket');
+//$link = mysqli_connect('localhost', 'harold', '123456', 'neosepeliosBDsocket');
 //if (mysqli_connect_errno()){
 //    echo "Failed to connect to MySQL: " . mysqli_connect_error();
 //}
 //echo 'Connected successfully';
+
+//Conectando, seleccionando la base de datos REMOTO
+
+$link = mysqli_connect('localhost', 'socket_user', 'neosepel', 'neosepel_ni_socket');
+if (mysqli_connect_errno()){
+    echo "Failed to connect to MySQL: " . mysqli_connect_error();
+}
+echo 'Connected successfully';
 
 
 class echoServer extends WebSocketServer {
@@ -34,7 +34,7 @@ class echoServer extends WebSocketServer {
             if(json_decode($message)->device == "server"){
 
                 $deviceNew = json_decode($message);
-                $dataDevice = array("idServer"=>$user->id, "emailClient"=>$deviceNew->emailClient, "password"=> $deviceNew->password);
+                $dataDevice = array("idServer"=>$user->id, "emailClient"=>$deviceNew->emailClient);
 
                 //Buscar en base de datos si el dispositivo ya existe y actualizarle el id, sino insertarlo en la base de datos
                 $sql = "INSERT INTO socketClients (idServer, socketServer, emailClient) VALUES ('$user->id', '$user->socket', '$deviceNew->emailClient')";
@@ -43,7 +43,7 @@ class echoServer extends WebSocketServer {
                     echo "Cliente conectado: " . $deviceNew->emailClient . " - " . $user->id . "\n";
 
                     //Consultar todos los dispositivos de la base de datos y mostrarlos en el cliente
-                    $sql = "SELECT idFromServer, device, fingerprint, status, mac FROM clients u INNER JOIN devices p ON u.idClient = p.idClient";
+                    $sql = "SELECT DISTINCT idFromServer, device, fingerprint, status, mac FROM clients u INNER JOIN devices p ON p.emailClient = '$deviceNew->emailClient'";
                     $result = $link->query($sql);
                     $dataDevices;
                     if ($result->num_rows > 0) {
@@ -110,7 +110,7 @@ class echoServer extends WebSocketServer {
                 }else{
 
                     //Insertar en base de datos el dispositivo nuevo
-                    $sql = "INSERT INTO devices (fingerprint, idFromServer, device, mac, status, socketFromServer, idClient)VALUES ('$deviceNew->fingerPrint', '$user->id', '$deviceNew->deviceNew', '$deviceNew->mac','1', '$user->socket', '$deviceNew->idClient')";
+                    $sql = "INSERT INTO devices (fingerprint, idFromServer, device, mac, status, socketFromServer, idClient, emailClient)VALUES ('$deviceNew->fingerPrint', '$user->id', '$deviceNew->deviceNew', '$deviceNew->mac','1', '$user->socket', '$deviceNew->idClient', '$deviceNew->emailClient')";
 
                     if ($link->query($sql) === TRUE) {
                         echo "El cliente " . $deviceNew->emailClient . " agrego el dispositivo nuevo: " . $deviceNew->deviceNew . " - " . $deviceNew->fingerPrint . "\n";
@@ -234,13 +234,20 @@ class echoServer extends WebSocketServer {
 }
 
 /*SERVER LOCAL*/
-$echo = new echoServer("192.168.1.171","9000");
+//$echo = new echoServer("192.168.1.171","9000");
 
 /*SERVER REMOTO*/
-//$echo = new echoServer("0.0.0.0","9999");
+$echo = new echoServer("0.0.0.0","9999");
 
 
 try {
+    $sql = "DELETE FROM socketClients";
+    if ($link->query($sql) === TRUE) {
+        echo "Reiniciando tabla de sockets en la base de datos" . "\n";
+    } else {
+        echo "Error deleting record: " . $link->error;
+    }
+
     $echo->run();
 }
 catch (Exception $e) {
