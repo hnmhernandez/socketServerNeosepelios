@@ -5,19 +5,19 @@ require_once('websockets.php');
 
 //Conectando, seleccionando la base de datos LOCAL
 
-//$link = mysqli_connect('localhost', 'harold', '123456', 'neosepeliosBDsocket');
-//if (mysqli_connect_errno()){
-//    echo "Failed to connect to MySQL: " . mysqli_connect_error();
-//}
-//echo 'Connected successfully';
-
-//Conectando, seleccionando la base de datos REMOTO
-
-$link = mysqli_connect('localhost', 'socket_user', 'neosepel', 'neosepel_ni_socket');
+$link = mysqli_connect('localhost', 'harold', '123456', 'neosepel_ni_socket');
 if (mysqli_connect_errno()){
     echo "Failed to connect to MySQL: " . mysqli_connect_error();
 }
 echo 'Connected successfully';
+
+//Conectando, seleccionando la base de datos REMOTO
+
+//$link = mysqli_connect('localhost', 'socket_user', 'neosepel', 'neosepel_ni_socket');
+//if (mysqli_connect_errno()){
+//    echo "Failed to connect to MySQL: " . mysqli_connect_error();
+//}
+//echo 'Connected successfully';
 
 
 class echoServer extends WebSocketServer {
@@ -234,7 +234,7 @@ class echoServer extends WebSocketServer {
 }
 
 /*SERVER LOCAL*/
-//$echo = new echoServer("192.168.1.171","9000");
+//$echo = new echoServer("192.168.1.105","9000");
 
 /*SERVER REMOTO*/
 $echo = new echoServer("0.0.0.0","9999");

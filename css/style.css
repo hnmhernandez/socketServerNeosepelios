@@ -40,10 +40,9 @@ html,body {
 
 .popup {
     margin: 70px auto;
-    padding: 20px;
     background: #fff;
     border-radius: 5px;
-    width: 45%;
+    width: 65%;
     position: relative;
     transition: all 5s ease-in-out;
 }
@@ -67,7 +66,6 @@ html,body {
     color: #06D85F;
 }
 .popup .content {
-    max-height: 30%;
     overflow: auto;
 }
 

@@ -9,7 +9,7 @@
 
             function init() {
                 /*SERVER LOCAL*/
-//                var host = "ws://192.168.1.171:9000/";
+//                var host = "ws://192.168.1.105:9000/";
 
                 /*SERVER REMOTO*/
                                 var host = "ws://138.36.236.142:9999/";
@@ -208,7 +208,6 @@
                 $("loader").style.visibility = "collapse";
                 $("popup1").style.visibility = "visible";
                 $("popup1").style.opacity = 1;
-                $("deviceName").innerHTML = device + " - Captura";
                 document.getElementById("captureResult").src=result;
             }
 
@@ -256,10 +255,8 @@
                 </tr>
             </table>
 
-            <div id="popup1" class="overlay">
+            <div id="popup1" class="overlay" onclick="closePopup()">
                 <div class="popup">
-                    <h2 id="deviceName"></h2>
-                    <a class="close" href="#" onclick="closePopup()">&times;</a>
                     <div class="content">
                         <img id="captureResult"> 
                     </div>
